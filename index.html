@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>BOUTIQUE 2026 | LUXURY</title>
+    <style>
+        :root { --dorado: #d4af37; --negro: #1a1a1a; --gris: #2d2d2d; }
+        body{font-family: 'Segoe UI', sans-serif; margin:0; background: var(--negro); color: white; padding-bottom:80px}
+        header{background: #000; color: var(--dorado); padding:20px; display:flex; justify-content:space-between; align-items:center; position:sticky; top:0; z-index:10; border-bottom: 1px solid var(--dorado)}
+        .search-container{padding:12px; background: var(--gris); border-bottom: 1px solid #444}
+        #search-input{width:90%; padding:12px; border: 1px solid var(--dorado); border-radius:5px; display:block; margin:0 auto; outline:none; background: #000; color: white}
+        nav{display:flex; background: #000}
+        nav button{flex:1; padding:15px; border:none; background:none; font-weight:bold; color: #888; text-transform: uppercase; letter-spacing: 1px}
+        .active{color: var(--dorado); border-bottom: 2px solid var(--dorado)}
+        .product{background: var(--gris); margin:12px; padding:18px; border-radius:8px; display:flex; justify-content:space-between; align-items:center; border: 1px solid #3d3d3d}
+        .price{color: var(--dorado); font-weight: bold; font-size: 1.1em}
+        #cart-modal{display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:100}
+        .modal-content{background: var(--gris); width:90%; margin:30px auto; border-radius:10px; padding:20px; border: 1px solid var(--dorado); color: white; max-height:80vh; overflow-y:auto}
+        .cart-item{display:flex; justify-content:space-between; align-items:center; padding:12px 0; border-bottom:1px solid #444}
+        .cart-controls{display:flex; align-items:center; gap:10px}
+        .btn-qty{background: #444; color: var(--dorado); border: 1px solid var(--dorado); padding:5px 10px; border-radius:3px; font-weight:bold}
+        .btn-wa{width:100%; background: var(--dorado); color: black; padding:15px; border:none; border-radius:5px; font-weight:bold; font-size:16px; margin-top:15px}
+        .add-btn{background: transparent; color: var(--dorado); border: 1px solid var(--dorado); padding:10px 15px; border-radius:4px; font-weight:bold}
+    </style>
+</head>
+<body>
+    <header>
+        <h2 style="font-style:italic; margin:0; letter-spacing: 2px">BOUTIQUE 2026</h2>
+        <button onclick="toggleCart(true)" style="background:var(--dorado); color:black; border:none; padding:8px 15px; border-radius:5px; font-weight:bold">🛒 <span id="count">0</span></button>
+    </header>
+    <div class="search-container">
+        <input type="text" id="search-input" placeholder="Buscar en la colección..." onkeyup="search()">
+    </div>
+    <nav>
+        <button onclick="render('Ropa')" id="btnRopa" class="active">ROPA</button>
+        <button onclick="render('Perfumes')" id="btnPerfumes">PERFUMES</button>
+    </nav>
+    <div id="lista"></div>
+    <div id="cart-modal"><div class="modal-content">
+        <span onclick="toggleCart(false)" style="float:right; font-size:28px; color:var(--dorado); cursor:pointer">&times;</span>
+        <h3 style="color:var(--dorado)">MI PEDIDO</h3>
+        <div id="cart-items"></div>
+        <hr style="border:0; border-top:1px solid #444; margin:15px 0">
+        <h4 style="text-align:right">Total: <span class="price">$<span id="total">0</span></span></h4>
+        <button class="btn-wa" onclick="enviar()">ENVIAR A WHATSAPP ✅</button>
+    </div></div>
+    <script>
+        let cart = {};
+        let currentCat = 'Ropa';
+        const items = [{c:'Ropa',n:'Sudadera Nike',p:500},{c:'Ropa',n:'Sudadera Adidas',p:450},{c:'Ropa',n:'Playera BOSS',p:350},{c:'Ropa',n:'Camiseta Polo',p:400},{c:'Ropa',n:'Chamara Calvin K',p:500},{c:'Perfumes',n:'Bleu de Chanel',p:4000},{c:'Perfumes',n:'Nautica Voyage',p:600},{c:'Perfumes',n:'Lattafa Asad',p:550},{c:'Perfumes',n:'Ameerat al Arab',p:550}];
+        function render(cat, filter = '') {
+            currentCat = cat;
+            const div=document.getElementById('lista'); div.innerHTML='';
+            document.getElementById('btnRopa').className=cat==='Ropa'?'active':'';
+            document.getElementById('btnPerfumes').className=cat==='Perfumes'?'active':'';
+            items.filter(i => i.c === cat && i.n.toLowerCase().includes(filter.toLowerCase())).forEach(i => {
+                div.innerHTML+=`<div class="product"><div><strong>${i.n}</strong><br><span class="price">$${i.p}</span></div><button class="add-btn" onclick="modify('${i.n}',${i.p}, 1)">AGREGAR</button></div>`;
+            });
+        }
+        function search() { render(currentCat, document.getElementById('search-input').value); }
+        function modify(n, p, change) {
+            if (!cart[n]) cart[n] = {p, q: 0};
+            cart[n].q += change;
+            if (cart[n].q <= 0) delete cart[n];
+            updateBadge();
+            if (document.getElementById('cart-modal').style.display === 'block') drawCart();
+        }
+        function updateBadge() {
+            let totalQ = Object.values(cart).reduce((s, i) => s + i.q, 0);
+            document.getElementById('count').innerText = totalQ;
+        }
+        function drawCart() {
+            const list = document.getElementById('cart-items');
+            const keys = Object.keys(cart);
+            if (keys.length === 0) {
+                list.innerHTML = '<p style="text-align:center; color:#888">Tu carrito está vacío</p>';
+                document.getElementById('total').innerText = '0';
+                return;
+            }
+            let total = 0;
+            list.innerHTML = keys.map(n => {
+                let sub = cart[n].p * cart[n].q;
+                total += sub;
+                return `<div class="cart-item">
+                    <div><b>${n}</b><br><small>$${cart[n].p} c/u</small></div>
+                    <div class="cart-controls">
+                        <button class="btn-qty" onclick="modify('${n}',${cart[n].p},-1)">-</button>
+                        <span>${cart[n].q}</span>
+                        <button class="btn-qty" onclick="modify('${n}',${cart[n].p},1)">+</button>
+                    </div>
+                </div>`;
+            }).join('');
+            document.getElementById('total').innerText = total;
+        }
+        function toggleCart(s){
+            document.getElementById('cart-modal').style.display = s ? 'block' : 'none';
+            if(s) drawCart();
+        }
+        function enviar(){
+            const keys = Object.keys(cart);
+            if(keys.length === 0) return alert("Carrito vacío");
+            const n="522223005297"; let m="*NUEVO PEDIDO - BOUTIQUE 2026*%0A%0A";
+            let total = 0;
+            keys.forEach(k => {
+                m += `• ${cart[k].q}x ${k} ($${cart[k].p * cart[k].q})%0A`;
+                total += cart[k].p * cart[k].q;
+            });
+            m += "%0A*Total a pagar: $" + total + "*";
+            window.open(`https://wa.me/${n}?text=${m}`, '_blank');
+        }
+        render('Ropa');
+    </script></body></html>
+<script>
+    // Seguridad: El número se construye por partes para evitar rastreo simple
+    function obtenerDestino() {
+        const parte1 = "52";
+        const parte2 = "2223";
+        const parte3 = "005297";
+        return parte1 + parte2 + parte3;
+    }
+
+    // Validación: Evita que se envíen mensajes vacíos o fraudulentos
+    function validarPedido() {
+        const total = Object.values(cart).reduce((s, i) => s + i.q, 0);
+        if (total <= 0) {
+            alert("Seguridad: No se puede procesar un pedido vacío.");
+            return false;
+        }
+        if (total > 50) {
+            alert("Seguridad: Pedido excede el límite permitido por transacción.");
+            return false;
+        }
+        return true;
+    }
+</script>
