@@ -47,8 +47,19 @@
     <script>
         let cart = {};
         let currentCat = 'Ropa';
-        const items = [{c:'Ropa',n:'Sudadera Nike',p:500},{c:'Ropa',n:'Sudadera Adidas',p:450,{c:'Ropa',n:'Gorra Canelo',p:499,i:'gorra.jpg'}
-,{c:'Ropa',n:'Playera BOSS',p:350},{c:'Ropa',n:'Camiseta Polo',p:400},{c:'Ropa',n:'Chamara Calvin K',p:500},{c:'Perfumes',n:'Bleu de Chanel',p:4000},{c:'Perfumes',n:'Nautica Voyage',p:600},{c:'Perfumes',n:'Lattafa Asad',p:550},{c:'Perfumes',n:'Ameerat al Arab',p:550}];
+        const items = [
+    // SECCICN ROPA
+    {c:'Ropa', n:'Sudadera Nike', p:800, i:'nike.jpg'},
+    {c:'Ropa', n:'Sudadera Adidas', p:450, i:'adidas.jpg'},
+    {c:'Ropa', n:'Playera BOSS', p:350, i:'boss.jpg'},
+    {c:'Ropa', n:'Gorra Canelo', p:700, i:'gorra.jpg'},
+    
+    // SECCICN PERFUMES
+    {c:'Perfumes', n:'Bad Boy', p:1200, i:'badboy.jpg'},
+    {c:'Perfumes', n:'Invictus', p:1100, i:'invictus.jpg'},
+    {c:'Perfumes', n:'One Million', p:1300, i:'million.jpg'}
+];
+
         function render(cat, filter = '') {
             currentCat = cat;
             const div=document.getElementById('lista'); div.innerHTML='';
