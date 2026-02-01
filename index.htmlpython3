@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BOUTIQUE 2026</title>
+    <style>
+        :root { --gold: #c5a059; --dark: #121212; }
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; background: #f4f4f4; padding-bottom: 80px; }
+        
+        /* Header con BotC3n de Carrito */
+        header { background: var(--dark); color: white; padding: 20px; text-align: center; position: sticky; top: 0; z-index: 100; display: flex; justify-content: space-between; align-items: center; }
+        .cart-icon-btn { background: none; border: none; font-size: 24px; cursor: pointer; position: relative; padding: 10px; }
+        .badge { position: absolute; top: 0; right: 0; background: red; color: white; font-size: 10px; padding: 2px 6px; border-radius: 50%; font-weight: bold; }
+        
+        /* NavegaciC3n */
+        nav { display: flex; background: white; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        nav button { flex: 1; padding: 15px; border: none; background: none; font-weight: bold; color: #888; border-bottom: 2px solid transparent; }
+        nav button.active { color: var(--dark); border-bottom: 2px solid var(--dark); }
+
+        /* Productos */
+        .container { padding: 15px; }
+        .product-card { background: white; border-radius: 15px; padding: 15px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+        .product-info h3 { margin: 0; font-size: 16px; }
+        .product-info p { margin: 5px 0 0; color: #2563eb; font-weight: bold; }
+        .add-btn { background: var(--dark); color: white; border: none; padding: 10px 18px; border-radius: 8px; font-weight: bold; font-size: 12px; }
+
+        /* Ventana del Carrito (Modal) */
+        #modal-carrito { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; }
+        .modal-content { background: white; width: 85%; max-width: 400px; margin: 50px auto; border-radius: 20px; padding: 20px; max-height: 70vh; overflow-y: auto; position: relative; }
+        .close-modal { position: absolute; top: 15px; right: 20px; font-size: 24px; font-weight: bold; }
+        .cart-item { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #eee; font-size: 14px; }
+        .total-box { margin-top: 20px; text-align: right; font-weight: bold; font-size: 18px; border-top: 2px solid #eee; padding-top: 10px; }
+        .buy-btn { background: #22c55e; color: white; width: 100%; border: none; padding: 15px; border-radius: 10px; font-weight: bold; margin-top: 20px; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div style="width: 44px;"></div> <h1 style="margin:0; font-style: italic; letter-spacing: -1px;">BOUTIQUE 2026</h1>
+        <button class="cart-icon-btn" onclick="toggleCart(true)">
+            p        </button>
+    </header>
+
+    <nav>
+        <button id="nav-Ropa" class="active" onclick="render('Ropa')">ROPA</button>
+        <button id="nav-Perfumes" onclick="render('Perfumes')">PERFUMES</button>
+    </nav>
+
+    <div class="container" id="lista-productos"></div>
+
+    <div id="modal-carrito">
+        <div class="modal-content">
+            <span class="close-modal" onclick="toggleCart(false)">&times;</span>
+            <h2 style="border-bottom: 2px solid #f4f4f4; padding-bottom: 10px;">Tu Carrito</h2>
+            <div id="items-carrito">
+                </div>
+            <div class="total-box">Total: $<span id="total-precio">0</span></div>
+            <button class="buy-btn" onclick="finalizarCompra()">CONFIRMAR PEDIDO</button>
+        </div>
+    </div>
+
+    <script>
+        let carrito = [];
+        const productos = [
+            {id:1, c:'Ropa', n:'Sudadera Nike', p:500}, {id:2, c:'Ropa', n:'Sudadera Adidas', p:450},
+            {id:3, c:'Ropa', n:'Playera BOSS', p:350}, {id:4, c:'Ropa', n:'Camiseta Polo', p:400}, {id:4, c:'Ropa', n:'Camiseta Polo', p:400},
+            {id:5, c:'Ropa', n:'Chamara Calvin K', p:500}, {id:6, c:'Perfumes', n:'Bleu de Chanel', p:4000},
+            {id:7, c:'Perfumes', n:'Nautica Voyage', p:600}, {id:8, c:'Perfumes', n:'Lattafa Asad', p:550},
+            {id:9, c:'Perfumes', n:'Asdaaf Ameerat al Arab', p:550}
+        ];
+
+        function render(cat) {
+            const container = document.getElementById('lista-productos');
+            container.innerHTML = '';
+            
+            // Actualizar botones nav
+            document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+            document.getElementById('nav-' + cat).classList.add('active');
+
+            productos.filter(p => p.c === cat).forEach(p => {
+                container.innerHTML += `
+                    <div class="product-card">
+                        <div class="product-info">
+                            <h3>${p.n}</h3>
+                            <p>$${p.p}</p>
+                        </div>
+                        <button class="add-btn" onclick="agregar('${p.n}', ${p.p})">AGREGAR</button>
+                    </div>`;
+            });
+        }
+
+        function agregar(nombre, precio) {
+            carrito.push({nombre, precio});
+            actualizarInterfaz();
+        }
+
+        function actualizarInterfaz() {
+            document.getElementById('badge-count').innerText = carrito.length;
+            
+            // Llenar el modal del carrito
+            const lista = document.getElementById('items-carrito');
+            lista.innerHTML = carrito.length === 0 ? '<p style="color:#888">No hay artC-culos aC:n.</p>' : '';
+            
+            let total = 0;
+            carrito.forEach((item, index) => {
+                total += item.precio;
+                lista.innerHTML += `
+                    <div class="cart-item">
+                        <span>${item.nombre}</span>
+                        <strong>$${item.precio}</strong>
+                    </div>`;
+            });
+            document.getElementById('total-precio').innerText = total;
+        }
+
+        function toggleCart(show) {
+            document.getElementById('modal-carrito').style.display = show ? 'block' : 'none';
+        }
+
+        function finalizarCompra() {
+            if(carrito.length === 0) return alert("Agrega algo primero");
+            alert("B!Pedido recibido!\nTotal: $" + document.getElementById('total-precio').innerText);
+            carrito = [];
+            actualizarInterfaz();
+            toggleCart(false);
+        }
+
+        // Iniciar
+        render('Ropa');
+    </script>
+</body>
+</html>
+
